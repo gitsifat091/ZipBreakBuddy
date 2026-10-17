@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 165" width="260" height="165" role="img" aria-label="Zip looking up at a water drop with a small round mouth">
+<ellipse cx="130" cy="150" rx="100" ry="7" fill="#1E2A3A" opacity="0.12"/>
+<path d="M30 82 L50 82 L52 74 L28 74 Z" fill="#1E2A3A"/>
+<path d="M30 110 Q28 84 52 80 L80 78 Q98 46 134 44 L156 44 Q184 46 200 76 L214 80 Q234 84 232 108 L232 118 Q232 126 224 126 L38 126 Q30 126 30 118 Z" fill="#F26B1D"/>
+<path d="M90 78 Q104 54 134 52 L156 52 Q178 54 192 78 Z" fill="#1E2A3A"/>
+<rect x="40" y="102" width="184" height="6" rx="3" fill="#FFF4E6" opacity="0.9"/>
+<rect x="33" y="90" width="8" height="9" rx="3" fill="#B91C1C"/>
+<ellipse cx="222" cy="94" rx="7" ry="5" fill="#FFE7A3"/>
+<circle cx="200" cy="92" r="5" fill="#FDBA8C"/>
+<ellipse cx="128" cy="66" rx="10" ry="11" fill="#FFFFFF"/><ellipse cx="160" cy="66" rx="10" ry="11" fill="#FFFFFF"/>
+<circle cx="132" cy="62" r="5" fill="#1E2A3A"/><circle cx="164" cy="62" r="5" fill="#1E2A3A"/>
+<ellipse cx="208" cy="114" rx="4" ry="5" fill="#1E2A3A"/>
+<path d="M226 8 C226 8 239 26 239 34 A13 13 0 0 1 213 34 C213 26 226 8 226 8 Z" fill="#38BDF8"/>
+<path d="M220 32 Q220 38 225 40" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+<circle cx="74" cy="126" r="21" fill="#1E2A3A"/><circle cx="74" cy="126" r="8" fill="#E7E2D8"/>
+<circle cx="190" cy="126" r="21" fill="#1E2A3A"/><circle cx="190" cy="126" r="8" fill="#E7E2D8"/>
+</svg>
