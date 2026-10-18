@@ -1,4 +1,4 @@
-﻿name: zip_break_buddy
+name: zip_break_buddy
 description: "A Windows tray app where Zip, a small orange coupe, reminds you to sit up, rest your eyes, drink water and take breaks."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -42,6 +42,8 @@ dependencies:
   win32: ^5.15.0
   ffi: ^2.2.0
   screen_retriever: ^0.2.2
+  audioplayers: ^6.7.1
+  desktop_multi_window: ^0.3.1
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +68,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/zip/
+    - assets/sounds/
     - assets/tray_icon.ico
 
   # To add assets to your application, add an assets section, like this:

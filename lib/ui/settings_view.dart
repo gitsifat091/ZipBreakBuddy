@@ -71,6 +71,26 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   ],
                 ),
+                const _SectionTitle('Effects'),
+                _Card(
+                  children: [
+                    _SwitchRow(
+                      title: 'Sounds',
+                      subtitle:
+                          'A horn when Zip arrives, an engine when he leaves',
+                      value: _s.soundsEnabled,
+                      onChanged: (v) =>
+                          setState(() => _s = _s.copyWith(soundsEnabled: v)),
+                    ),
+                    _SwitchRow(
+                      title: 'Drive-away animation',
+                      subtitle: 'Zip drives off across the screen after Done',
+                      value: _s.driveAwayEnabled,
+                      onChanged: (v) =>
+                          setState(() => _s = _s.copyWith(driveAwayEnabled: v)),
+                    ),
+                  ],
+                ),
                 const _SectionTitle('General'),
                 _Card(
                   children: [

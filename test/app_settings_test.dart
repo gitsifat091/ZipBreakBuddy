@@ -26,6 +26,38 @@ void main() {
     expect(back.startWithWindows, isTrue);
   });
 
+  test('sounds and drive-away are on by default', () {
+    expect(AppSettings.defaults.soundsEnabled, isTrue);
+    expect(AppSettings.defaults.driveAwayEnabled, isTrue);
+    // Settings saved before these options existed keep the defaults.
+    final old = AppSettings.fromJson({'idleMinutes': 7});
+    expect(old.soundsEnabled, isTrue);
+    expect(old.driveAwayEnabled, isTrue);
+  });
+
+  test('sounds and drive-away round-trip through JSON', () {
+    final s = AppSettings.defaults.copyWith(
+      soundsEnabled: false,
+      driveAwayEnabled: false,
+    );
+    final back = AppSettings.fromJson(
+      jsonDecode(jsonEncode(s.toJson())) as Map<String, Object?>,
+    );
+    expect(back.soundsEnabled, isFalse);
+    expect(back.driveAwayEnabled, isFalse);
+    // The other options are untouched.
+    expect(back.pomodoro, isFalse);
+  });
+
+  test('non-boolean sounds and drive-away values fall back to on', () {
+    final s = AppSettings.fromJson({
+      'soundsEnabled': 'no',
+      'driveAwayEnabled': 0,
+    });
+    expect(s.soundsEnabled, isTrue);
+    expect(s.driveAwayEnabled, isTrue);
+  });
+
   test('bad or missing fields fall back to defaults', () {
     final s = AppSettings.fromJson({
       'reminders': {

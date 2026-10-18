@@ -12,8 +12,10 @@ import 'core/idle_gate.dart';
 import 'core/message_queue.dart';
 import 'core/reminder.dart';
 import 'core/reminder_scheduler.dart';
+import 'platform/drive_away_window.dart';
 import 'platform/idle_monitor.dart';
 import 'platform/settings_store.dart';
+import 'platform/sound_player.dart';
 import 'ui/toast_slide.dart';
 
 /// Run with `--dart-define=ZIP_DEBUG=true` to count intervals in seconds.
@@ -40,6 +42,10 @@ class AppController with TrayListener, WindowListener {
   bool _toastWindowShown = false;
   int _hideGeneration = 0;
 
+  /// True while Zip is driving across the screen after Done. Reminders that
+  /// fire meanwhile wait in the queue until the drive is over.
+  bool _driving = false;
+
   /// Whether the window is currently the Settings screen.
   final settingsOpen = ValueNotifier<bool>(false);
 
@@ -54,6 +60,8 @@ class AppController with TrayListener, WindowListener {
   DateTime? _pausedUntil;
   final _idleMonitor = IdleMonitor();
   final _idleGate = IdleGate(threshold: const Duration(minutes: 5));
+  final _sound = SoundPlayer();
+  final _driveWindow = DriveAwayWindow();
 
   Duration get _unit =>
       kZipDebug ? const Duration(seconds: 1) : const Duration(minutes: 1);
@@ -138,7 +146,7 @@ class AppController with TrayListener, WindowListener {
   /// Puts [message] on screen and arms the auto-hide timer. While Settings
   /// is open the message just waits at the head of the queue.
   Future<void> _show(ReminderMessage message) async {
-    if (settingsOpen.value) return;
+    if (settingsOpen.value || _driving) return;
     _autoHide?.cancel();
     _autoHide = Timer(
       message.actionable ? _ignoredTimeout : _infoTimeout,
@@ -146,6 +154,12 @@ class AppController with TrayListener, WindowListener {
     );
     _hideGeneration++; // Cancels a slide-out still in progress.
     current.value = message;
+    if (message.actionable) {
+      // The confirmation after Snooze stays silent.
+      if (settings.soundsEnabled) _sound.pipPip();
+      // Boot the drive-away window now so Done can use it right away.
+      if (settings.driveAwayEnabled) _driveWindow.prepare();
+    }
     if (!_toastWindowShown) {
       _toastWindowShown = true;
       await _showToastWindow();
@@ -155,20 +169,51 @@ class AppController with TrayListener, WindowListener {
   }
 
   /// Dismisses the current pop-up and shows the next queued one, if any.
-  Future<void> _advance() async {
+  ///
+  /// With [drive], the pop-up closes at once and Zip drives off instead of
+  /// the usual slide-out; the next reminder waits for the drive to end.
+  Future<void> _advance({bool drive = false}) async {
     _autoHide?.cancel();
-    final next = _queue.advance();
+    _queue.advance();
+    if (drive && settings.driveAwayEnabled && await _driveAway()) {
+      await _showWaiting();
+      return;
+    }
     await _hideToast();
-    if (next != null) {
-      // A short gap so consecutive reminders read as separate pop-ups.
-      await Future<void>.delayed(_queueGap);
-      if (_queue.current == next) await _show(next);
+    await _showWaiting();
+  }
+
+  /// Shows whatever is at the head of the queue, after a short gap so
+  /// consecutive reminders read as separate pop-ups.
+  Future<void> _showWaiting() async {
+    final waiting = _queue.current;
+    if (waiting == null) return;
+    await Future<void>.delayed(_queueGap);
+    if (_queue.current == waiting) await _show(waiting);
+  }
+
+  void done() => _advance(drive: true);
+
+  /// Plays the drive-away. Returns false if it could not run.
+  Future<bool> _driveAway() async {
+    _driving = true;
+    try {
+      return await _driveWindow.play(
+        beforeShow: () async {
+          await _dismissToast();
+          if (settings.soundsEnabled) unawaited(_sound.vroom());
+        },
+      );
+    } finally {
+      _driving = false;
     }
   }
 
-  void done() => _advance();
+  /// Dev shortcut (debug builds): drives off without a reminder.
+  Future<void> testDrive() => _driveAway();
 
   void snooze() {
+    _driveWindow.release();
     final type = current.value?.type;
     if (type != null) scheduler.snooze(type);
     _queue.replaceCurrent(ReminderMessage.snoozed);
@@ -186,12 +231,19 @@ class AppController with TrayListener, WindowListener {
   /// Slides the pop-up out, then hides the window. A message shown during
   /// the slide-out wins: it bumps [_hideGeneration] and this bails out.
   Future<void> _hideToast() async {
+    _driveWindow.release();
     if (!_toastWindowShown) return;
     final generation = ++_hideGeneration;
     debugPrint('[Zip] pop-up hiding');
     toastIn.value = false;
     await Future<void>.delayed(toastSlideOut);
     if (generation != _hideGeneration) return;
+    _resetToast();
+    if (!settingsOpen.value) await windowManager.hide();
+  }
+
+  /// Closes the pop-up at once, with no slide-out.
+  Future<void> _dismissToast() async {
     _resetToast();
     if (!settingsOpen.value) await windowManager.hide();
   }
@@ -241,6 +293,7 @@ class AppController with TrayListener, WindowListener {
     }
     // A pop-up on screen goes back to waiting; it returns when Settings closes.
     _autoHide?.cancel();
+    _driveWindow.release();
     _resetToast();
     settingsOpen.value = true;
 
@@ -281,6 +334,7 @@ class AppController with TrayListener, WindowListener {
     }
     // New intervals start fresh; stale queued reminders go away.
     _queue.clear();
+    if (!next.driveAwayEnabled) _driveWindow.release();
     _applySchedule();
     debugPrint('[Zip] settings saved: ${next.toJson()}');
     await closeSettings();
@@ -300,6 +354,7 @@ class AppController with TrayListener, WindowListener {
           MenuItem(key: 'settings', label: 'Settings'),
           if (kZipDebug)
             MenuItem(key: 'test', label: 'Test: fire all reminders'),
+          if (kZipDebug) MenuItem(key: 'test_drive', label: 'Test: drive away'),
           MenuItem.separator(),
           MenuItem(key: 'quit', label: 'Quit'),
         ],
@@ -329,6 +384,8 @@ class AppController with TrayListener, WindowListener {
         openSettings();
       case 'test':
         ReminderType.regular.forEach(_onFire);
+      case 'test_drive':
+        testDrive();
       case 'quit':
         quit();
     }
@@ -340,6 +397,8 @@ class AppController with TrayListener, WindowListener {
   Future<void> quit() async {
     _ticker?.cancel();
     _idleMonitor.dispose();
+    await _driveWindow.release();
+    await _sound.dispose();
     await trayManager.destroy();
     await windowManager.setPreventClose(false);
     await windowManager.destroy();

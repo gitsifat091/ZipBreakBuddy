@@ -22,6 +22,10 @@ No webcam and no tracking: every reminder runs on a timer, and Zip pauses on its
 
 - **A pop-up that stays out of the way.** It's a 380×200 frameless, always-on-top card that slides in at the bottom right. It doesn't take keyboard focus, so it never interrupts your typing, and it hides itself after 30 seconds if you ignore it.
 - **Done or Snooze 10 min.** Snoozing shows a sleepy Zip for a moment, then brings that reminder back in 10 minutes.
+- **A friendly "pip pip".** A short two-beep horn plays when a reminder slides in. The sleepy snooze confirmation stays silent.
+- **Zip drives away.** Click *Done* and the pop-up closes, then Zip drives right to left along the bottom of the screen, wheels spinning and smoke puffing from the exhaust, with a fading "vroom". It takes about 3 seconds. The animation runs in its own transparent, click-through window that never takes focus and never shows in the taskbar or Alt+Tab. Snooze and the 30-second auto-hide keep the plain slide-out, and a queued reminder waits until Zip has left.
+- **Sounds and animation are optional.** *Sounds* and *Drive-away animation* are two switches in Settings, both on by default.
+- **No audio files from anywhere else.** Both sounds are synthesized by a script in this repo ([`tool/generate_sounds.dart`](tool/generate_sounds.dart)), so there is nothing third-party to license. See [Regenerating the sounds](#regenerating-the-sounds).
 - **One pop-up at a time.** Reminders that fire together wait in a queue, and the same reminder is never queued twice.
 - **Idle detection.** Timers pause when you're away and restart fresh when you come back (see [below](#how-idle-detection-works)).
 - **Pomodoro mode.** 25 minutes of focus, then a 5-minute break. Zip cheers you into the break and calls you back afterwards. In this mode the cycle replaces the regular *Break time* reminder, and the other reminders hold during the break.
@@ -77,6 +81,7 @@ flutter run -d windows --dart-define=ZIP_DEBUG=true
 - **Longer idle threshold:** it becomes 3 s per unit, so 15 s by default. Plain seconds would pause the timers whenever you simply watch the screen.
 - **Test menu item:** the tray gets *Test: fire all reminders*, which fires all four at once to try out the queue.
 - **Open Settings at launch:** add `--dart-entrypoint-args=--open-settings`.
+- **Test the drive-away:** the tray gets *Test: drive away*, and `--dart-entrypoint-args=--test-drive` plays it once at launch.
 - **Event log:** `[Zip]` lines in the console log each firing, idle change and hide.
 
 ### Release build
@@ -102,10 +107,13 @@ lib/
   platform/
     idle_monitor.dart         GetLastInputInfo via win32/ffi
     settings_store.dart       shared_preferences persistence
-  ui/                       Pop-up, slide animation, Settings, theme
+    sound_player.dart         Plays the two sounds with audioplayers
+    drive_away_window.dart    The overlay window: creation, Win32 styling, lifetime
+  ui/                       Pop-up, slide animation, drive-away scene, Settings, theme
   app_controller.dart       Connects the tray, the window, the scheduler and the views
   main.dart
-tool/                       Icon and README-media generators (run on demand)
+assets/sounds/              pip_pip.wav and vroom.wav (generated)
+tool/                       Icon, sound and README-media generators (run on demand)
 ```
 
 The scheduler never reads the clock itself. The app passes it the elapsed time every second, so tests can step through hours of schedule instantly:
@@ -116,8 +124,19 @@ flutter test
 
 ### Design notes
 
-- **One window, three states.** The app has a single native window that is hidden, the reminder pop-up, or Settings. It changes size, position, always-on-top and taskbar visibility as it switches, which avoids Flutter multi-window entirely.
+- **One main window, three states.** The app's main window is hidden, the reminder pop-up, or Settings. It changes size, position, always-on-top and taskbar visibility as it switches.
+- **A second window only for the drive-away.** The wide overlay is a separate window made with [desktop_multi_window](https://pub.dev/packages/desktop_multi_window), because the pop-up window can't be both card-sized and screen-wide at once. It boots while a pop-up is on screen and closes as soon as the drive ends (or the pop-up goes away unused), so no extra engine sits idle in the tray. The main window then styles it through Win32 (`WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST`) and shows it with `SW_SHOWNOACTIVATE`, which is what makes it click-through and focus-free. If the overlay fails to start, Done falls back to the normal slide-out.
 - **Resize workaround.** On Windows, a window resized while hidden can keep a render surface at the old size, which shows up as a squashed pop-up. After showing, the app changes the window size by 1px and back to force a fresh surface. It also keeps an almost invisible (1/255 opacity) backdrop painted, so that resize always produces a real frame.
+
+## Regenerating the sounds
+
+The horn and the engine are synthesized from sine and sawtooth waves in plain Dart, so there is no recorded audio in the repo:
+
+```powershell
+dart run tool/generate_sounds.dart
+```
+
+It rewrites `assets/sounds/pip_pip.wav` (two horn beeps, 0.4 s) and `assets/sounds/vroom.wav` (an engine that revs up and fades over 2.6 s). Edit the constants in the script to change the pitch, length or character.
 
 ## Regenerating the README media
 
@@ -144,5 +163,7 @@ The media renderer loads Segoe UI from `C:\Windows\Fonts`, so run it on Windows.
 [shared_preferences](https://pub.dev/packages/shared_preferences) ·
 [launch_at_startup](https://pub.dev/packages/launch_at_startup) ·
 [screen_retriever](https://pub.dev/packages/screen_retriever) ·
+[audioplayers](https://pub.dev/packages/audioplayers) ·
+[desktop_multi_window](https://pub.dev/packages/desktop_multi_window) ·
 [win32](https://pub.dev/packages/win32) ·
 [ffi](https://pub.dev/packages/ffi)

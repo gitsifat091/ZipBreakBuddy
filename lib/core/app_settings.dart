@@ -7,6 +7,8 @@ class AppSettings {
     this.idleMinutes = 5,
     this.startWithWindows = false,
     this.pomodoro = false,
+    this.soundsEnabled = true,
+    this.driveAwayEnabled = true,
   });
 
   static final defaults = AppSettings(
@@ -18,6 +20,12 @@ class AppSettings {
   final int idleMinutes;
   final bool startWithWindows;
   final bool pomodoro;
+
+  /// The "pip pip" horn and the "vroom" engine sound.
+  final bool soundsEnabled;
+
+  /// Zip driving across the screen after Done.
+  final bool driveAwayEnabled;
 
   static const minInterval = 1;
   static const maxInterval = 240;
@@ -39,11 +47,15 @@ class AppSettings {
     int? idleMinutes,
     bool? startWithWindows,
     bool? pomodoro,
+    bool? soundsEnabled,
+    bool? driveAwayEnabled,
   }) => AppSettings(
     reminders: reminders ?? this.reminders,
     idleMinutes: idleMinutes ?? this.idleMinutes,
     startWithWindows: startWithWindows ?? this.startWithWindows,
     pomodoro: pomodoro ?? this.pomodoro,
+    soundsEnabled: soundsEnabled ?? this.soundsEnabled,
+    driveAwayEnabled: driveAwayEnabled ?? this.driveAwayEnabled,
   );
 
   AppSettings withReminder(ReminderConfig config) =>
@@ -57,6 +69,8 @@ class AppSettings {
     'idleMinutes': idleMinutes,
     'startWithWindows': startWithWindows,
     'pomodoro': pomodoro,
+    'soundsEnabled': soundsEnabled,
+    'driveAwayEnabled': driveAwayEnabled,
   };
 
   /// Tolerant of missing or malformed fields: anything unreadable falls back
@@ -83,6 +97,12 @@ class AppSettings {
       pomodoro: json['pomodoro'] is bool
           ? json['pomodoro'] as bool
           : d.pomodoro,
+      soundsEnabled: json['soundsEnabled'] is bool
+          ? json['soundsEnabled'] as bool
+          : d.soundsEnabled,
+      driveAwayEnabled: json['driveAwayEnabled'] is bool
+          ? json['driveAwayEnabled'] as bool
+          : d.driveAwayEnabled,
     );
   }
 

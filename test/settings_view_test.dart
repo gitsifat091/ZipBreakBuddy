@@ -40,4 +40,48 @@ void main() {
     expect(saved!.reminders[ReminderType.water]!.interval, 50);
     expect(saved!.startWithWindows, isFalse);
   });
+
+  testWidgets('Sounds and Drive-away toggles feed into Save', (tester) async {
+    tester.view.physicalSize = const Size(500, 680);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    AppSettings? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildZipTheme(),
+        home: Scaffold(
+          body: SettingsView(
+            initial: AppSettings.defaults,
+            unitLabel: 'min',
+            onSave: (s) => saved = s,
+            onCancel: () {},
+          ),
+        ),
+      ),
+    );
+
+    Finder switchFor(String title) => find.descendant(
+      of: find.ancestor(of: find.text(title), matching: find.byType(Row)).first,
+      matching: find.byType(Switch),
+    );
+
+    // Both start on.
+    await tester.scrollUntilVisible(find.text('Sounds'), 100);
+    expect(tester.widget<Switch>(switchFor('Sounds')).value, isTrue);
+    expect(
+      tester.widget<Switch>(switchFor('Drive-away animation')).value,
+      isTrue,
+    );
+
+    await tester.tap(switchFor('Sounds'));
+    await tester.pump();
+    await tester.tap(switchFor('Drive-away animation'));
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+
+    expect(saved!.soundsEnabled, isFalse);
+    expect(saved!.driveAwayEnabled, isFalse);
+    expect(saved!.pomodoro, isFalse);
+  });
 }
