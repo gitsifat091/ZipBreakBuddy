@@ -102,9 +102,8 @@ void main() {
   }
 
   testWidgets('settings', (tester) async {
-    // Taller than the real 500x680 window: offscreen text metrics run a
-    // little taller, and the last row would otherwise scroll out of view.
-    await sized(tester, const Size(500, 740));
+    // The real 500x700 window; the settings fit with no scrolling.
+    await sized(tester, const Size(500, 700));
     addTearDown(tester.view.reset);
     await tester.pumpWidget(app(RepaintBoundary(
       key: _shotKey,

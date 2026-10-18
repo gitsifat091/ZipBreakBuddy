@@ -38,6 +38,17 @@ class _SettingsViewState extends State<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
+    // Compact switches (no 48px tap target) so every row is slimmer and the
+    // whole window fits without scrolling.
+    return Theme(
+      data: Theme.of(
+        context,
+      ).copyWith(materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+      child: _window(),
+    );
+  }
+
+  Widget _window() {
     return Container(
       decoration: BoxDecoration(
         color: ZipColors.background,
@@ -57,7 +68,7 @@ class _SettingsViewState extends State<SettingsView> {
                     for (final type in ReminderType.regular) _reminderRow(type),
                   ],
                 ),
-                const _SectionTitle('Pomodoro'),
+                const _SectionTitle('General'),
                 _Card(
                   children: [
                     _SwitchRow(
@@ -69,34 +80,20 @@ class _SettingsViewState extends State<SettingsView> {
                       onChanged: (v) =>
                           setState(() => _s = _s.copyWith(pomodoro: v)),
                     ),
-                  ],
-                ),
-                const _SectionTitle('Effects'),
-                _Card(
-                  children: [
                     _SwitchRow(
                       title: 'Sounds',
-                      subtitle:
-                          'A horn when Zip arrives, an engine when he leaves',
                       value: _s.soundsEnabled,
                       onChanged: (v) =>
                           setState(() => _s = _s.copyWith(soundsEnabled: v)),
                     ),
                     _SwitchRow(
                       title: 'Drive-away animation',
-                      subtitle: 'Zip drives off across the screen after Done',
                       value: _s.driveAwayEnabled,
                       onChanged: (v) =>
                           setState(() => _s = _s.copyWith(driveAwayEnabled: v)),
                     ),
-                  ],
-                ),
-                const _SectionTitle('General'),
-                _Card(
-                  children: [
                     _Row(
                       title: 'Pause when idle for',
-                      subtitle: 'No keyboard or mouse input',
                       trailing: _Stepper(
                         value: _s.idleMinutes,
                         min: AppSettings.minIdle,
@@ -125,10 +122,10 @@ class _SettingsViewState extends State<SettingsView> {
 
   Widget _header() => DragToMoveArea(
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
       child: Row(
         children: [
-          SvgPicture.asset(ZipPose.happy.asset, width: 64),
+          SvgPicture.asset(ZipPose.happy.asset, width: 52),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
@@ -156,7 +153,7 @@ class _SettingsViewState extends State<SettingsView> {
   );
 
   Widget _footer() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+    padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -177,7 +174,7 @@ class _SettingsViewState extends State<SettingsView> {
     return _Row(
       leading: Opacity(
         opacity: active ? 1 : 0.4,
-        child: SvgPicture.asset(_icons[type]!.asset, width: 44),
+        child: SvgPicture.asset(_icons[type]!.asset, width: 36),
       ),
       title: type.label,
       subtitle: replaced ? 'Replaced by Pomodoro' : null,
@@ -215,7 +212,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
+    padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
     child: Text(
       text.toUpperCase(),
       style: const TextStyle(
@@ -259,7 +256,7 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
     child: Row(
       children: [
         if (leading != null) ...[leading!, const SizedBox(width: 12)],

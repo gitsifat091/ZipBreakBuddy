@@ -7,7 +7,7 @@ import 'package:zip_break_buddy/ui/theme.dart';
 
 void main() {
   testWidgets('toggles and steppers feed into Save', (tester) async {
-    tester.view.physicalSize = const Size(500, 680);
+    tester.view.physicalSize = const Size(500, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -42,7 +42,7 @@ void main() {
   });
 
   testWidgets('Sounds and Drive-away toggles feed into Save', (tester) async {
-    tester.view.physicalSize = const Size(500, 680);
+    tester.view.physicalSize = const Size(500, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 

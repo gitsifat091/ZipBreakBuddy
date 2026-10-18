@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
@@ -23,7 +24,9 @@ const kZipDebug = bool.fromEnvironment('ZIP_DEBUG');
 const unitLabel = kZipDebug ? 'sec' : 'min';
 
 const toastSize = Size(380, 200);
-const settingsSize = Size(500, 680);
+
+/// Tall enough for every row without scrolling (see SettingsView).
+const settingsSize = Size(500, 700);
 const _screenMargin = 16.0;
 const _ignoredTimeout = Duration(seconds: 30);
 const _infoTimeout = Duration(seconds: 4);
@@ -300,7 +303,12 @@ class AppController with TrayListener, WindowListener {
     await windowManager.hide();
     await windowManager.setAlwaysOnTop(false);
     await windowManager.setSkipTaskbar(false);
-    await windowManager.setSize(settingsSize);
+    // On a short screen, fit the work area; the list scrolls as a fallback.
+    final display = await screenRetriever.getPrimaryDisplay();
+    final workHeight = (display.visibleSize ?? display.size).height;
+    await windowManager.setSize(
+      Size(settingsSize.width, math.min(settingsSize.height, workHeight - 16)),
+    );
     await windowManager.center();
     await windowManager.show();
     await windowManager.focus();
